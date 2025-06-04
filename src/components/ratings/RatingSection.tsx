@@ -11,7 +11,6 @@ import toast from 'react-hot-toast';
 
 interface RatingSectionProps {
   movieId: number;
-  initialRating?: number;
 }
 
 const reviewSchema = z.object({
@@ -22,7 +21,7 @@ const reviewSchema = z.object({
 
 type ReviewFormData = z.infer<typeof reviewSchema>;
 
-const RatingSection: React.FC<RatingSectionProps> = ({ movieId, initialRating = 0 }) => {
+const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
   const { isAuthenticated } = useAuth();
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'date' | 'rating'>('date');
@@ -30,7 +29,6 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId, initialRating = 
   const {
     ratings,
     reviews,
-    addRating,
     addReview,
     updateReview,
     deleteReview,
@@ -49,14 +47,11 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId, initialRating = 
     resolver: zodResolver(reviewSchema),
   });
 
-  const handleRating = (rating: number) => {
-    if (!isAuthenticated) {
-      toast.error('Please sign in to rate movies');
-      return;
-    }
-    addRating(movieId, rating);
-    toast.success('Rating saved successfully!');
-  };
+  const movieRatings = ratings.filter(r => r.movieId === movieId);
+  const movieReviews = reviews.filter(r => r.movieId === movieId);
+  const averageRating = movieRatings.length
+    ? movieRatings.reduce((acc, curr) => acc + curr.rating, 0) / movieRatings.length
+    : 0;
 
   const onSubmitReview = (data: ReviewFormData) => {
     if (!isAuthenticated) {
@@ -64,18 +59,11 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId, initialRating = 
       return;
     }
 
-    const currentRating = ratings.find(r => r.movieId === movieId)?.rating || 0;
-    
-    if (currentRating === 0) {
-      toast.error('Please rate the movie before adding a review');
-      return;
-    }
-
     if (isEditing) {
       updateReview(isEditing, data.content);
       toast.success('Review updated successfully!');
     } else {
-      addReview(movieId, data.content, currentRating);
+      addReview(movieId, data.content, averageRating);
       toast.success('Review added successfully!');
     }
 
@@ -90,12 +78,6 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId, initialRating = 
     }
   };
 
-  const movieRatings = ratings.filter(r => r.movieId === movieId);
-  const movieReviews = reviews.filter(r => r.movieId === movieId);
-  const averageRating = movieRatings.length
-    ? movieRatings.reduce((acc, curr) => acc + curr.rating, 0) / movieRatings.length
-    : 0;
-
   const sortedReviews = [...movieReviews].sort((a, b) => {
     if (sortBy === 'date') {
       return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
@@ -104,53 +86,27 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId, initialRating = 
   });
 
   return (
-    <div className="space-y-6">
-      {/* Rating Section */}
-      <div className="space-y-4">
+    <div className="space-y-8">
+      {/* Average Rating Display */}
+      <div className="bg-card border border-border rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Movie Rating</h2>
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-semibold">Rate this Movie</h3>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={undo}
-              disabled={!canUndo()}
-              className="p-2 rounded-full hover:bg-card disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Undo rating"
-            >
-              <Undo2 className="w-5 h-5" />
-            </button>
-            <button
-              onClick={redo}
-              disabled={!canRedo()}
-              className="p-2 rounded-full hover:bg-card disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Redo rating"
-            >
-              <Redo2 className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between bg-card p-4 rounded-lg">
           <div>
-            <StarRating
-              initialRating={initialRating}
-              onChange={handleRating}
-              size="lg"
-            />
+            <div className="flex items-center gap-2">
+              <StarRating initialRating={averageRating} readOnly size="lg" />
+              <span className="text-3xl font-bold">{averageRating.toFixed(1)}</span>
+            </div>
             <p className="text-sm text-text-secondary mt-2">
-              {movieRatings.length} {movieRatings.length === 1 ? 'rating' : 'ratings'}
+              Based on {movieRatings.length} {movieRatings.length === 1 ? 'rating' : 'ratings'}
             </p>
-          </div>
-          <div className="text-right">
-            <p className="text-3xl font-bold">{averageRating.toFixed(1)}</p>
-            <p className="text-sm text-text-secondary">Average rating</p>
           </div>
         </div>
       </div>
 
-      {/* Review Section */}
-      <div className="space-y-4">
+      {/* Reviews Section */}
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-semibold">Reviews</h3>
+          <h2 className="text-xl font-semibold">Reviews</h2>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'date' | 'rating')}
@@ -161,22 +117,7 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId, initialRating = 
           </select>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmitReview)} className="space-y-4">
-          <div>
-            <textarea
-              {...register('content')}
-              placeholder="Write your review here..."
-              className="w-full h-32 bg-card border border-border rounded-lg p-4 resize-none"
-            />
-            {errors.content && (
-              <p className="mt-1 text-sm text-error">{errors.content.message}</p>
-            )}
-          </div>
-          <button type="submit" className="btn-primary">
-            {isEditing ? 'Update Review' : 'Submit Review'}
-          </button>
-        </form>
-
+        {/* Existing Reviews */}
         <div className="space-y-4">
           {sortedReviews.map((review) => (
             <div key={review.id} className="bg-card border border-border rounded-lg p-4">
@@ -206,6 +147,48 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId, initialRating = 
             </div>
           ))}
         </div>
+
+        {/* Write Review Form */}
+        <form onSubmit={handleSubmit(onSubmitReview)} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">
+              Write a Review
+            </label>
+            <div className="relative">
+              <textarea
+                {...register('content')}
+                placeholder="Share your thoughts about the movie..."
+                className="w-full h-32 bg-card border border-border rounded-lg p-4 resize-none"
+              />
+              <div className="absolute top-2 right-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={undo}
+                  disabled={!canUndo()}
+                  className="p-1.5 rounded-full hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Undo"
+                >
+                  <Undo2 className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={redo}
+                  disabled={!canRedo()}
+                  className="p-1.5 rounded-full hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Redo"
+                >
+                  <Redo2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            {errors.content && (
+              <p className="mt-1 text-sm text-error">{errors.content.message}</p>
+            )}
+          </div>
+          <button type="submit" className="btn-primary">
+            {isEditing ? 'Update Review' : 'Submit Review'}
+          </button>
+        </form>
       </div>
     </div>
   );
