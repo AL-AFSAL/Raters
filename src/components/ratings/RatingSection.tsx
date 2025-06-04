@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { Undo2, Redo2, Edit2, Trash2 } from 'lucide-react';
+import { Undo2, Redo2, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { useRatingStore } from '../../stores/ratingStore';
 import { useAuth } from '../../contexts/AuthContext';
 import StarRating from '../ui/StarRating';
 import toast from 'react-hot-toast';
+import { checkSystemStatus, logError, validateReview } from '../../utils/troubleshoot';
 
 interface RatingSectionProps {
   movieId: number;
@@ -25,6 +26,8 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
   const { isAuthenticated } = useAuth();
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'date' | 'rating'>('date');
+  const [systemStatus, setSystemStatus] = useState({ database: true, auth: true, api: true });
+  const [isLoading, setIsLoading] = useState(false);
   
   const {
     ratings,
@@ -47,34 +50,68 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
     resolver: zodResolver(reviewSchema),
   });
 
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const status = await checkSystemStatus();
+        setSystemStatus(status);
+      } catch (error) {
+        logError('RatingSection', error as Error, { movieId });
+      }
+    };
+
+    checkStatus();
+  }, [movieId]);
+
   const movieRatings = ratings.filter(r => r.movieId === movieId);
   const movieReviews = reviews.filter(r => r.movieId === movieId);
   const averageRating = movieRatings.length
     ? movieRatings.reduce((acc, curr) => acc + curr.rating, 0) / movieRatings.length
     : 0;
 
-  const onSubmitReview = (data: ReviewFormData) => {
-    if (!isAuthenticated) {
-      toast.error('Please sign in to review movies');
-      return;
-    }
+  const onSubmitReview = async (data: ReviewFormData) => {
+    try {
+      setIsLoading(true);
 
-    if (isEditing) {
-      updateReview(isEditing, data.content);
-      toast.success('Review updated successfully!');
-    } else {
-      addReview(movieId, data.content, averageRating);
-      toast.success('Review added successfully!');
-    }
+      if (!isAuthenticated) {
+        toast.error('Please sign in to review movies');
+        return;
+      }
 
-    reset();
-    setIsEditing(null);
+      if (!validateReview(data.content)) {
+        toast.error('Invalid review content');
+        return;
+      }
+
+      if (isEditing) {
+        await updateReview(isEditing, data.content);
+        toast.success('Review updated successfully!');
+      } else {
+        await addReview(movieId, data.content, averageRating);
+        toast.success('Review added successfully!');
+      }
+
+      reset();
+      setIsEditing(null);
+    } catch (error) {
+      logError('RatingSection.onSubmitReview', error as Error, {
+        movieId,
+        isEditing,
+        content: data.content
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeleteReview = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this review?')) {
-      deleteReview(id);
-      toast.success('Review deleted successfully!');
+  const handleDeleteReview = async (id: string) => {
+    try {
+      if (window.confirm('Are you sure you want to delete this review?')) {
+        await deleteReview(id);
+        toast.success('Review deleted successfully!');
+      }
+    } catch (error) {
+      logError('RatingSection.handleDeleteReview', error as Error, { reviewId: id });
     }
   };
 
@@ -84,6 +121,24 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
     }
     return b.rating - a.rating;
   });
+
+  if (!systemStatus.database || !systemStatus.auth) {
+    return (
+      <div className="bg-error/10 border border-error rounded-lg p-6 text-error">
+        <div className="flex items-center gap-2 mb-4">
+          <AlertTriangle className="w-5 h-5" />
+          <h2 className="text-lg font-semibold">System Error</h2>
+        </div>
+        <p>Unable to load the rating system. Please try again later.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-error text-white rounded-md hover:bg-error/90"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -157,12 +212,13 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
                 {...register('content')}
                 placeholder="Share your thoughts about the movie..."
                 className="w-full h-32 bg-card border border-border rounded-lg p-4 resize-none"
+                disabled={isLoading}
               />
               <div className="absolute top-2 right-2 flex gap-2">
                 <button
                   type="button"
                   onClick={undo}
-                  disabled={!canUndo()}
+                  disabled={!canUndo() || isLoading}
                   className="p-1.5 rounded-full hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Undo"
                 >
@@ -171,7 +227,7 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
                 <button
                   type="button"
                   onClick={redo}
-                  disabled={!canRedo()}
+                  disabled={!canRedo() || isLoading}
                   className="p-1.5 rounded-full hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Redo"
                 >
@@ -183,8 +239,12 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
               <p className="mt-1 text-sm text-error">{errors.content.message}</p>
             )}
           </div>
-          <button type="submit" className="btn-primary">
-            {isEditing ? 'Update Review' : 'Submit Review'}
+          <button 
+            type="submit" 
+            className="btn-primary"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Processing...' : isEditing ? 'Update Review' : 'Submit Review'}
           </button>
         </form>
       </div>
