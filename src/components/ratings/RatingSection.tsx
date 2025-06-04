@@ -90,16 +90,14 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
       {/* Average Rating Display */}
       <div className="bg-card border border-border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">Movie Rating</h2>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <StarRating initialRating={averageRating} readOnly size="lg" />
-              <span className="text-3xl font-bold">{averageRating.toFixed(1)}</span>
-            </div>
-            <p className="text-sm text-text-secondary mt-2">
-              Based on {movieRatings.length} {movieRatings.length === 1 ? 'rating' : 'ratings'}
-            </p>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <StarRating initialRating={averageRating} readOnly size="lg" />
+            <span className="text-3xl font-bold">{averageRating.toFixed(1)}</span>
           </div>
+          <span className="text-sm text-text-secondary">
+            ({movieRatings.length} {movieRatings.length === 1 ? 'rating' : 'ratings'})
+          </span>
         </div>
       </div>
 
