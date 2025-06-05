@@ -20,7 +20,6 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) 
 
   return (
     <div className="relative w-full max-w-[800px] mx-auto overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl">
-      {/* Background Image with Gradient Overlay */}
       <div className="absolute inset-0 opacity-30">
         <img
           src={movie.backdrop_path 
@@ -37,9 +36,7 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) 
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent" />
       </div>
 
-      {/* Content Container */}
       <div className="relative p-8 md:p-12">
-        {/* Header Section */}
         <div className="mb-8">
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-200 via-gray-100 to-gray-300 mb-4">
             {movie.title}
@@ -49,9 +46,7 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) 
           </p>
         </div>
 
-        {/* Main Content Grid */}
         <div className="grid md:grid-cols-12 gap-8">
-          {/* Poster Column */}
           <div className="md:col-span-4">
             <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-xl">
               <img
@@ -69,9 +64,7 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) 
             </div>
           </div>
 
-          {/* Info Column */}
           <div className="md:col-span-8 space-y-6">
-            {/* Movie Details */}
             <div className="space-y-4">
               <div className="flex flex-wrap gap-4 text-sm text-gray-400">
                 <div className="flex items-center">
@@ -97,7 +90,6 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) 
               </div>
             </div>
 
-            {/* Genres */}
             <div className="flex flex-wrap gap-2">
               {movie.genres?.map((genre) => (
                 <span
@@ -109,9 +101,7 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) 
               ))}
             </div>
 
-            {/* Rating Section */}
             <div className="space-y-4 pt-4 border-t border-gray-700">
-              {/* Average Rating */}
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Average Rating</span>
                 <div className="flex items-center gap-4">
@@ -127,7 +117,6 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) 
                 </div>
               </div>
 
-              {/* User Rating */}
               <div className="flex items-center justify-end">
                 <StarRating
                   initialRating={movie.user_rating || 0}

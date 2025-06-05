@@ -84,7 +84,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onRate }) => {
         <div className="mt-auto pt-4 space-y-2">
           {typeof movie.average_rating !== 'undefined' && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-text-secondary">Average Rating:</span>
+              <span className="text-sm text-text-secondary">Average:</span>
               <StarRating 
                 initialRating={movie.average_rating} 
                 readOnly
@@ -94,7 +94,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onRate }) => {
             </div>
           )}
           
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-end">
             <StarRating 
               initialRating={movie.user_rating || 0} 
               onChange={handleRating}
