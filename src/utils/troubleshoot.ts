@@ -5,13 +5,22 @@ interface SystemStatus {
   database: boolean;
   auth: boolean;
   api: boolean;
+  events: boolean;
+}
+
+interface RatingDebugInfo {
+  buttonConnected: boolean;
+  handlerRegistered: boolean;
+  eventsFiring: boolean;
+  dataFlow: boolean;
 }
 
 export const checkSystemStatus = async (): Promise<SystemStatus> => {
   const status: SystemStatus = {
     database: false,
     auth: false,
-    api: false
+    api: false,
+    events: false
   };
 
   try {
@@ -46,6 +55,9 @@ export const checkSystemStatus = async (): Promise<SystemStatus> => {
     } catch {
       status.api = false;
     }
+
+    // Check event system
+    status.events = checkEventSystem();
 
     return status;
   } catch (error) {
@@ -90,3 +102,70 @@ export const debugRatingSystem = async () => {
 
   return status;
 };
+
+export const checkEventSystem = (): boolean => {
+  let eventsFiring = false;
+  const testButton = document.createElement('button');
+  
+  testButton.addEventListener('click', () => {
+    eventsFiring = true;
+  });
+  
+  // Simulate click
+  testButton.click();
+  
+  return eventsFiring;
+};
+
+export const debugRatingButton = (buttonElement: HTMLElement): RatingDebugInfo => {
+  const debugInfo: RatingDebugInfo = {
+    buttonConnected: false,
+    handlerRegistered: false,
+    eventsFiring: false,
+    dataFlow: false
+  };
+
+  // Check if button is in DOM
+  debugInfo.buttonConnected = document.contains(buttonElement);
+
+  // Check for click handlers
+  const events = getEventListeners(buttonElement);
+  debugInfo.handlerRegistered = events.click?.length > 0;
+
+  // Test event firing
+  let eventFired = false;
+  const testHandler = () => { eventFired = true; };
+  buttonElement.addEventListener('click', testHandler);
+  buttonElement.click();
+  buttonElement.removeEventListener('click', testHandler);
+  debugInfo.eventsFiring = eventFired;
+
+  // Check data flow
+  debugInfo.dataFlow = checkDataFlow();
+
+  return debugInfo;
+};
+
+const checkDataFlow = (): boolean => {
+  try {
+    // Check if rating context is available
+    const ratingContext = document.querySelector('[data-rating-context]');
+    if (!ratingContext) return false;
+
+    // Check if rating state updates
+    const testRating = 4;
+    const event = new CustomEvent('rating-update', { detail: { rating: testRating } });
+    let stateUpdated = false;
+
+    const stateCheck = () => { stateUpdated = true; };
+    ratingContext.addEventListener('rating-update', stateCheck);
+    ratingContext.dispatchEvent(event);
+    ratingContext.removeEventListener('rating-update', stateCheck);
+
+    return stateUpdated;
+  } catch {
+    return false;
+  }
+};
+
+declare function getEventListeners(element: Element): { [key: string]: { listener: Function }[] };
