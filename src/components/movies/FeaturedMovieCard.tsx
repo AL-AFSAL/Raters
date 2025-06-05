@@ -2,12 +2,22 @@ import React from 'react';
 import { Star, Clock, Calendar, Award } from 'lucide-react';
 import { Movie } from '../../types/movie';
 import StarRating from '../ui/StarRating';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface FeaturedMovieCardProps {
   movie: Movie;
+  onRate?: (movieId: number, rating: number) => void;
 }
 
-const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie }) => {
+const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) => {
+  const { isAuthenticated } = useAuth();
+
+  const handleRating = (rating: number) => {
+    if (onRate && isAuthenticated) {
+      onRate(movie.id, rating);
+    }
+  };
+
   return (
     <div className="relative w-full max-w-[800px] mx-auto overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl">
       {/* Background Image with Gradient Overlay */}
@@ -115,6 +125,19 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie }) => {
                     ({movie.user_ratings?.length || 0} ratings)
                   </span>
                 </div>
+              </div>
+
+              {/* User Rating */}
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">
+                  {isAuthenticated ? 'Your Rating:' : 'Login to Rate'}
+                </span>
+                <StarRating
+                  initialRating={movie.user_rating || 0}
+                  onChange={handleRating}
+                  readOnly={!isAuthenticated}
+                  size="lg"
+                />
               </div>
             </div>
           </div>
