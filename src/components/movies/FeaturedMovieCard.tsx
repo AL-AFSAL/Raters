@@ -2,22 +2,12 @@ import React from 'react';
 import { Star, Clock, Calendar, Award } from 'lucide-react';
 import { Movie } from '../../types/movie';
 import StarRating from '../ui/StarRating';
-import { useAuth } from '../../contexts/AuthContext';
 
 interface FeaturedMovieCardProps {
   movie: Movie;
-  onRate?: (movieId: number, rating: number) => void;
 }
 
-const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) => {
-  const { isAuthenticated } = useAuth();
-
-  const handleRating = (rating: number) => {
-    if (onRate) {
-      onRate(movie.id, rating);
-    }
-  };
-
+const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie }) => {
   return (
     <div className="relative w-full max-w-[800px] mx-auto overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl">
       {/* Background Image with Gradient Overlay */}
@@ -45,7 +35,7 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) 
             {movie.title}
           </h1>
           <p className="text-xl italic text-gray-400">
-            Your mind is the scene of the crime
+            {movie.overview}
           </p>
         </div>
 
@@ -93,10 +83,7 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) 
               </p>
 
               <div className="space-y-2">
-                <p className="text-gray-400">Directed by Christopher Nolan</p>
-                <p className="text-gray-400">
-                  Starring Leonardo DiCaprio, Joseph Gordon-Levitt, Ellen Page
-                </p>
+                <p className="text-gray-400">Directed by {movie.director}</p>
               </div>
             </div>
 
@@ -128,17 +115,6 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) 
                     ({movie.user_ratings?.length || 0} ratings)
                   </span>
                 </div>
-              </div>
-
-              {/* User Rating */}
-              <div className="flex items-center justify-between">
-                <span className="text-gray-400">Your Rating</span>
-                <StarRating
-                  initialRating={movie.user_rating || 0}
-                  onChange={handleRating}
-                  readOnly={!isAuthenticated}
-                  size="lg"
-                />
               </div>
             </div>
           </div>

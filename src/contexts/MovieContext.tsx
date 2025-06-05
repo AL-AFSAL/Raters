@@ -25,6 +25,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.7,
     vote_count: 24187,
     runtime: 142,
+    director: "Frank Darabont",
     genres: [
       { id: 18, name: "Drama" },
       { id: 80, name: "Crime" }
@@ -45,6 +46,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.7,
     vote_count: 18177,
     runtime: 175,
+    director: "Francis Ford Coppola",
     genres: [
       { id: 18, name: "Drama" },
       { id: 80, name: "Crime" }
@@ -64,6 +66,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.5,
     vote_count: 29937,
     runtime: 152,
+    director: "Christopher Nolan",
     genres: [
       { id: 18, name: "Drama" },
       { id: 28, name: "Action" },
@@ -85,6 +88,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.4,
     vote_count: 32186,
     runtime: 148,
+    director: "Christopher Nolan",
     genres: [
       { id: 28, name: "Action" },
       { id: 878, name: "Science Fiction" },
@@ -105,6 +109,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.5,
     vote_count: 24187,
     runtime: 154,
+    director: "Quentin Tarantino",
     genres: [
       { id: 80, name: "Crime" },
       { id: 53, name: "Thriller" }
@@ -125,6 +130,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.6,
     vote_count: 31245,
     runtime: 169,
+    director: "Christopher Nolan",
     genres: [
       { id: 878, name: "Science Fiction" },
       { id: 12, name: "Adventure" },
@@ -145,6 +151,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.7,
     vote_count: 25678,
     runtime: 136,
+    director: "Lana Wachowski, Lilly Wachowski",
     genres: [
       { id: 878, name: "Science Fiction" },
       { id: 28, name: "Action" }
@@ -165,6 +172,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.5,
     vote_count: 15234,
     runtime: 132,
+    director: "Bong Joon-ho",
     genres: [
       { id: 18, name: "Drama" },
       { id: 35, name: "Comedy" },
@@ -185,6 +193,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.5,
     vote_count: 12567,
     runtime: 107,
+    director: "Damien Chazelle",
     genres: [
       { id: 18, name: "Drama" },
       { id: 10402, name: "Music" }
@@ -204,6 +213,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.8,
     vote_count: 14567,
     runtime: 125,
+    director: "Hayao Miyazaki",
     genres: [
       { id: 16, name: "Animation" },
       { id: 14, name: "Fantasy" },
@@ -225,6 +235,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.7,
     vote_count: 12345,
     runtime: 139,
+    director: "Daniel Kwan, Daniel Scheinert",
     genres: [
       { id: 28, name: "Action" },
       { id: 35, name: "Comedy" },
@@ -245,6 +256,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.1,
     vote_count: 9876,
     runtime: 99,
+    director: "Wes Anderson",
     genres: [
       { id: 35, name: "Comedy" },
       { id: 12, name: "Adventure" },
@@ -265,6 +277,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.6,
     vote_count: 7654,
     runtime: 130,
+    director: "Naoko Yamada",
     genres: [
       { id: 16, name: "Animation" },
       { id: 18, name: "Drama" },
@@ -285,6 +298,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.0,
     vote_count: 15678,
     runtime: 164,
+    director: "Denis Villeneuve",
     genres: [
       { id: 878, name: "Science Fiction" },
       { id: 18, name: "Drama" },
@@ -305,6 +319,7 @@ const SAMPLE_MOVIES: Movie[] = [
     vote_average: 8.4,
     vote_count: 6543,
     runtime: 122,
+    director: "Céline Sciamma",
     genres: [
       { id: 18, name: "Drama" },
       { id: 10749, name: "Romance" },

@@ -3,22 +3,12 @@ import { Link } from 'react-router-dom';
 import { Calendar, Clock, Users } from 'lucide-react';
 import StarRating from '../ui/StarRating';
 import { Movie } from '../../types/movie';
-import { useAuth } from '../../contexts/AuthContext';
 
 interface MovieCardProps {
   movie: Movie;
-  onRate?: (movieId: number, rating: number) => void;
 }
 
-const MovieCard: React.FC<MovieCardProps> = ({ movie, onRate }) => {
-  const { isAuthenticated } = useAuth();
-
-  const handleRating = (rating: number) => {
-    if (onRate) {
-      onRate(movie.id, rating);
-    }
-  };
-
+const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
   const formatRuntime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -76,7 +66,12 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onRate }) => {
             </div>
           )}
         </div>
-        <div className="mt-auto pt-4 space-y-2">
+        <div className="mt-2">
+          <p className="text-sm text-text-secondary">
+            Directed by {movie.director}
+          </p>
+        </div>
+        <div className="mt-auto pt-4">
           {typeof movie.average_rating !== 'undefined' && (
             <div className="flex items-center justify-between">
               <span className="text-sm text-text-secondary">Average Rating:</span>
@@ -88,18 +83,6 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onRate }) => {
               />
             </div>
           )}
-          
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-text-secondary">
-              {isAuthenticated ? 'Your Rating:' : 'Login to Rate'}
-            </span>
-            <StarRating 
-              initialRating={movie.user_rating || 0} 
-              onChange={handleRating}
-              readOnly={!isAuthenticated}
-              size="sm"
-            />
-          </div>
         </div>
       </div>
     </div>

@@ -19,6 +19,7 @@ export interface Movie {
   vote_average: number;
   vote_count: number;
   runtime?: number;
+  director?: string;
   genres?: Genre[];
   user_rating?: number;
   user_ratings?: UserRating[];
