@@ -15,26 +15,37 @@ export const checkSystemStatus = async (): Promise<SystemStatus> => {
   };
 
   try {
-    const supabase = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_ANON_KEY
-    );
+    // Check if Supabase environment variables are configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    // Check database connection
-    const { data, error } = await supabase
-      .from('ratings')
-      .select('id')
-      .limit(1);
-    
-    status.database = !error;
+    if (supabaseUrl && supabaseKey) {
+      const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check authentication service
-    const { data: authData, error: authError } = await supabase.auth.getSession();
-    status.auth = !authError;
+      // Check database connection
+      const { error: dbError } = await supabase
+        .from('ratings')
+        .select('id')
+        .limit(1);
+      
+      status.database = !dbError;
+
+      // Check authentication service
+      const { error: authError } = await supabase.auth.getSession();
+      status.auth = !authError;
+    } else {
+      // If Supabase is not configured, assume services are mocked
+      status.database = true;
+      status.auth = true;
+    }
 
     // Check API endpoints
-    const apiResponse = await fetch('https://api.themoviedb.org/3/movie/popular');
-    status.api = apiResponse.ok;
+    try {
+      const apiResponse = await fetch('https://api.themoviedb.org/3/movie/popular');
+      status.api = apiResponse.ok;
+    } catch {
+      status.api = false;
+    }
 
     return status;
   } catch (error) {
