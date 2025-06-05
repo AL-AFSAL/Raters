@@ -128,10 +128,7 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) 
               </div>
 
               {/* User Rating */}
-              <div className="flex items-center justify-between">
-                <span className="text-gray-400">
-                  {isAuthenticated ? 'Your Rating:' : 'Login to Rate'}
-                </span>
+              <div className="flex items-center justify-end">
                 <StarRating
                   initialRating={movie.user_rating || 0}
                   onChange={handleRating}

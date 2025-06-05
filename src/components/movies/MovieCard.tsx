@@ -95,9 +95,6 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onRate }) => {
           )}
           
           <div className="flex items-center justify-between">
-            <span className="text-sm text-text-secondary">
-              {isAuthenticated ? 'Your Rating:' : 'Login to Rate'}
-            </span>
             <StarRating 
               initialRating={movie.user_rating || 0} 
               onChange={handleRating}
