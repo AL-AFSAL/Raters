@@ -105,12 +105,6 @@ const FeaturedMovieCard: React.FC<FeaturedMovieCardProps> = ({ movie, onRate }) 
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Average Rating</span>
                 <div className="flex items-center gap-4">
-                  <StarRating
-                    initialRating={movie.average_rating || 0}
-                    readOnly
-                    size="lg"
-                    showPercentage
-                  />
                   <span className="text-gray-400 text-sm">
                     ({movie.user_ratings?.length || 0} ratings)
                   </span>
