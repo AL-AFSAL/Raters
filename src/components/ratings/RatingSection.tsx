@@ -8,10 +8,10 @@ import { useRatingStore } from '../../stores/ratingStore';
 import { useAuth } from '../../contexts/AuthContext';
 import StarRating from '../ui/StarRating';
 import toast from 'react-hot-toast';
-import { checkSystemStatus, logError, validateReview } from '../../utils/troubleshoot';
 
 interface RatingSectionProps {
   movieId: number;
+  initialRating?: number;
 }
 
 const reviewSchema = z.object({
@@ -22,12 +22,12 @@ const reviewSchema = z.object({
 
 type ReviewFormData = z.infer<typeof reviewSchema>;
 
-const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
+const RatingSection: React.FC<RatingSectionProps> = ({ movieId, initialRating = 0 }) => {
   const { isAuthenticated } = useAuth();
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'date' | 'rating'>('date');
-  const [systemStatus, setSystemStatus] = useState({ database: true, auth: true, api: true });
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
   
   const {
     ratings,
@@ -50,24 +50,17 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
     resolver: zodResolver(reviewSchema),
   });
 
+  // Remove the problematic system status check
   useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const status = await checkSystemStatus();
-        setSystemStatus(status);
-      } catch (error) {
-        logError('RatingSection', error as Error, { movieId });
-      }
-    };
-
-    checkStatus();
+    // Simple initialization without external system checks
+    setHasError(false);
   }, [movieId]);
 
   const movieRatings = ratings.filter(r => r.movieId === movieId);
   const movieReviews = reviews.filter(r => r.movieId === movieId);
   const averageRating = movieRatings.length
     ? movieRatings.reduce((acc, curr) => acc + curr.rating, 0) / movieRatings.length
-    : 0;
+    : initialRating || 0;
 
   const onSubmitReview = async (data: ReviewFormData) => {
     try {
@@ -78,8 +71,8 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
         return;
       }
 
-      if (!validateReview(data.content)) {
-        toast.error('Invalid review content');
+      if (data.content.length < 10) {
+        toast.error('Review must be at least 10 characters long');
         return;
       }
 
@@ -94,11 +87,8 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
       reset();
       setIsEditing(null);
     } catch (error) {
-      logError('RatingSection.onSubmitReview', error as Error, {
-        movieId,
-        isEditing,
-        content: data.content
-      });
+      console.error('Error submitting review:', error);
+      toast.error('Failed to submit review. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -111,8 +101,14 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
         toast.success('Review deleted successfully!');
       }
     } catch (error) {
-      logError('RatingSection.handleDeleteReview', error as Error, { reviewId: id });
+      console.error('Error deleting review:', error);
+      toast.error('Failed to delete review. Please try again.');
     }
+  };
+
+  const handleRetry = () => {
+    setHasError(false);
+    window.location.reload();
   };
 
   const sortedReviews = [...movieReviews].sort((a, b) => {
@@ -122,7 +118,8 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
     return b.rating - a.rating;
   });
 
-  if (!systemStatus.database || !systemStatus.auth) {
+  // Show error state only if there's a critical error
+  if (hasError) {
     return (
       <div className="bg-error/10 border border-error rounded-lg p-6 text-error">
         <div className="flex items-center gap-2 mb-4">
@@ -131,7 +128,7 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
         </div>
         <p>Unable to load the rating system. Please try again later.</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={handleRetry}
           className="mt-4 px-4 py-2 bg-error text-white rounded-md hover:bg-error/90"
         >
           Retry
@@ -160,93 +157,137 @@ const RatingSection: React.FC<RatingSectionProps> = ({ movieId }) => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Reviews</h2>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'date' | 'rating')}
-            className="bg-card border border-border rounded-md px-3 py-1"
-          >
-            <option value="date">Sort by Date</option>
-            <option value="rating">Sort by Rating</option>
-          </select>
+          {sortedReviews.length > 0 && (
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'date' | 'rating')}
+              className="bg-card border border-border rounded-md px-3 py-1 text-text-primary"
+            >
+              <option value="date">Sort by Date</option>
+              <option value="rating">Sort by Rating</option>
+            </select>
+          )}
         </div>
 
         {/* Existing Reviews */}
         <div className="space-y-4">
-          {sortedReviews.map((review) => (
-            <div key={review.id} className="bg-card border border-border rounded-lg p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <StarRating initialRating={review.rating} readOnly size="sm" />
-                  <p className="text-sm text-text-secondary mt-1">
-                    {format(new Date(review.timestamp), 'PPP')}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setIsEditing(review.id)}
-                    className="p-2 rounded-full hover:bg-background"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteReview(review.id)}
-                    className="p-2 rounded-full hover:bg-background text-error"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              <p className="mt-4 text-text-primary">{review.content}</p>
+          {sortedReviews.length === 0 ? (
+            <div className="text-center py-8 text-text-secondary">
+              <p>No reviews yet. Be the first to share your thoughts!</p>
             </div>
-          ))}
+          ) : (
+            sortedReviews.map((review) => (
+              <div key={review.id} className="bg-card border border-border rounded-lg p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <StarRating initialRating={review.rating} readOnly size="sm" />
+                    <p className="text-sm text-text-secondary mt-1">
+                      {format(new Date(review.timestamp), 'PPP')}
+                    </p>
+                  </div>
+                  {isAuthenticated && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setIsEditing(review.id);
+                          reset({ content: review.content });
+                        }}
+                        className="p-2 rounded-full hover:bg-background transition-colors"
+                        title="Edit review"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteReview(review.id)}
+                        className="p-2 rounded-full hover:bg-background text-error transition-colors"
+                        title="Delete review"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-4 text-text-primary leading-relaxed">{review.content}</p>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Write Review Form */}
-        <form onSubmit={handleSubmit(onSubmitReview)} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">
-              Write a Review
-            </label>
-            <div className="relative">
-              <textarea
-                {...register('content')}
-                placeholder="Share your thoughts about the movie..."
-                className="w-full h-32 bg-card border border-border rounded-lg p-4 resize-none"
-                disabled={isLoading}
-              />
-              <div className="absolute top-2 right-2 flex gap-2">
-                <button
-                  type="button"
-                  onClick={undo}
-                  disabled={!canUndo() || isLoading}
-                  className="p-1.5 rounded-full hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Undo"
-                >
-                  <Undo2 className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={redo}
-                  disabled={!canRedo() || isLoading}
-                  className="p-1.5 rounded-full hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Redo"
-                >
-                  <Redo2 className="w-4 h-4" />
-                </button>
+        {isAuthenticated ? (
+          <div className="bg-card border border-border rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">
+              {isEditing ? 'Edit Review' : 'Write a Review'}
+            </h3>
+            <form onSubmit={handleSubmit(onSubmitReview)} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">
+                  Share your thoughts about this movie
+                </label>
+                <div className="relative">
+                  <textarea
+                    {...register('content')}
+                    placeholder="What did you think of this movie? Share your thoughts, favorite scenes, or what made it special..."
+                    className="w-full h-32 bg-background border border-border rounded-lg p-4 resize-none text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    disabled={isLoading}
+                  />
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={undo}
+                      disabled={!canUndo() || isLoading}
+                      className="p-1.5 rounded-full hover:bg-card disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Undo"
+                    >
+                      <Undo2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={redo}
+                      disabled={!canRedo() || isLoading}
+                      className="p-1.5 rounded-full hover:bg-card disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Redo"
+                    >
+                      <Redo2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                {errors.content && (
+                  <p className="mt-1 text-sm text-error">{errors.content.message}</p>
+                )}
               </div>
-            </div>
-            {errors.content && (
-              <p className="mt-1 text-sm text-error">{errors.content.message}</p>
-            )}
+              <div className="flex gap-3">
+                <button 
+                  type="submit" 
+                  className="btn-primary"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Processing...' : isEditing ? 'Update Review' : 'Submit Review'}
+                </button>
+                {isEditing && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditing(null);
+                      reset();
+                    }}
+                    className="btn-secondary"
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
           </div>
-          <button 
-            type="submit" 
-            className="btn-primary"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Processing...' : isEditing ? 'Update Review' : 'Submit Review'}
-          </button>
-        </form>
+        ) : (
+          <div className="bg-card border border-border rounded-lg p-6 text-center">
+            <p className="text-text-secondary mb-4">Sign in to write a review and share your thoughts about this movie.</p>
+            <button className="btn-primary">
+              Sign In to Review
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
