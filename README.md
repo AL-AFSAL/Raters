@@ -1,1 +1,1 @@
-Raters
+A dynamic new web application designed for movie lovers and critics alike. Raters is a movie rating platform where users can discover, rate, and review films from all genres. Whether you're looking to share your opinions on the latest blockbuster, explore top-rated classics, or find hidden cinematic gems, Raters offers a user-friendly space to connect with a community that shares your passion for movies. Built with a focus on simplicity, interactivity, and real-time feedback, Raters aims to become your go-to destination for all things film.
